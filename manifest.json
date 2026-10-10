@@ -1,0 +1,10 @@
+{
+  "id": "web-search-menu",
+  "name": "Web Search Menu",
+  "version": "0.1.0",
+  "minAppVersion": "1.1.1",
+  "description": "Search the web for selected text or the note title from the right-click menu, with engines you define.",
+  "author": "Siulved54",
+  "authorUrl": "https://github.com/perezamadorluisenrique-gif",
+  "isDesktopOnly": false
+}
