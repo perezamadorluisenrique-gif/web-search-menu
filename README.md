@@ -11,7 +11,7 @@ Commands (all on the command palette, so you can give them hotkeys):
 - **Search the web for the selection**, and **...with...** to choose the engine.
 - **Search the web for the note title**, and **...with...** to choose the engine.
 
-Selected Markdown is cleaned first: `[[Note|alias]]` searches for `alias`, links, bold, highlights and list markers are dropped. It works in reading view too, using the text you selected there.
+Selected Markdown is cleaned first: `[[Note|alias]]` searches for `alias`, links, bold, highlights and list markers are dropped. In reading view there is no right-click item; use the commands, which search the text you selected there.
 
 Built-in engines: Google, DuckDuckGo, Wikipedia, YouTube, Google Scholar, Bing. Add your own in the settings, one per line, with `{query}` where the search text goes:
 
@@ -21,7 +21,7 @@ Maps | https://www.google.com/maps/search/{query}
 GitHub | https://github.com/search?q={query}
 ```
 
-Settings also choose the default engine and how many engines get their own menu item.
+The first engine in the list is the default. Settings also choose how many engines get their own menu item.
 
 ## Privacy
 

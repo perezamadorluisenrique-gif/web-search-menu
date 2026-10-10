@@ -17,15 +17,15 @@ export const DEFAULT_ENGINES: Engine[] = [
   { name: 'Bing', url: 'https://www.bing.com/search?q={query}' },
 ];
 
-/** Turns selected Markdown into plain words to search for. */
+/** Turns selected Markdown into plain words to search for. Only paired markers go, so `2 * 3` and `__init__` stay as typed. */
 export function cleanQuery(text: string): string {
   return text
     .replace(/!?\[\[([^\]|]*)\|([^\]]*)\]\]/g, '$2')
     .replace(/!?\[\[([^\]]*)\]\]/g, (_, target: string) => target.split('#')[0].split('^')[0] || target)
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/`+|\*{1,3}|==|~~/g, '')
-    .replace(/(^|\s)_+|_+(?=\s|$)/g, '$1')
     .replace(/^\s*(#{1,6}\s+|>\s*|[-*+]\s+(\[.\]\s+)?|\d+[.)]\s+)/gm, '')
+    .replace(/`+/g, '')
+    .replace(/(\*{1,3}|==|~~)(?=\S)([^\n]*?\S)\1/g, '$2')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -70,11 +70,6 @@ export function parseEngines(text: string): ParsedEngines {
     else engines.push(engine);
   });
   return { engines, problems };
-}
-
-/** The engine with this name (any case), else the first one. */
-export function pickEngine(engines: Engine[], name: string): Engine | undefined {
-  return engines.find((e) => e.name.toLowerCase() === name.toLowerCase()) ?? engines[0];
 }
 
 /** Shortens text for a menu title. */

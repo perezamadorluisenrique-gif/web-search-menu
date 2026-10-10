@@ -1,20 +1,17 @@
 import { App, FuzzySuggestModal, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import type { Editor, SettingDefinitionItem } from 'obsidian';
 
-import { DEFAULT_ENGINES, buildUrl, cleanQuery, formatEngines, parseEngines, pickEngine, shorten } from './src/logic.ts';
+import { DEFAULT_ENGINES, buildUrl, cleanQuery, engineProblem, formatEngines, parseEngines, shorten } from './src/logic.ts';
 import type { Engine } from './src/logic.ts';
 
 interface WebSearchMenuSettings {
   engines: Engine[];
-  /** Name of the engine the plain commands and the first menu item use. */
-  defaultEngine: string;
   /** How many engines get their own item in the right-click menu; the rest sit behind "Search with...". */
   menuEngines: number;
 }
 
 const DEFAULT_SETTINGS: WebSearchMenuSettings = {
   engines: DEFAULT_ENGINES,
-  defaultEngine: 'Google',
   menuEngines: 2,
 };
 
@@ -26,7 +23,11 @@ export default class WebSearchMenuPlugin extends Plugin {
   async onload() {
     const saved = (await this.loadData()) as Partial<WebSearchMenuSettings> | null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
-    if (!Array.isArray(this.settings.engines) || this.settings.engines.length === 0) this.settings.engines = DEFAULT_ENGINES;
+    // Stored data may be hand-edited or from an older version, so check it again.
+    const stored: unknown = this.settings.engines;
+    const engines = Array.isArray(stored) ? (stored as Partial<Engine>[]).filter((e): e is Engine => typeof e.name === 'string' && typeof e.url === 'string' && engineProblem(e as Engine) === null) : [];
+    this.settings.engines = engines.length > 0 ? engines : DEFAULT_ENGINES;
+    this.settings.menuEngines = Math.min(6, Math.max(1, Math.round(Number(this.settings.menuEngines)) || DEFAULT_SETTINGS.menuEngines));
     this.addSettingTab(new WebSearchMenuSettingTab(this.app, this));
 
     this.addCommand({
@@ -72,8 +73,9 @@ export default class WebSearchMenuPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
+  /** The first engine in the list. */
   defaultEngine(): Engine {
-    return pickEngine(this.settings.engines, this.settings.defaultEngine) ?? DEFAULT_ENGINES[0];
+    return this.settings.engines[0] ?? DEFAULT_ENGINES[0];
   }
 
   /** Items for `query`: the default engine first, then the next few, then a picker. */
@@ -116,7 +118,7 @@ export default class WebSearchMenuPlugin extends Plugin {
     if (!view) return '';
     const editor: Editor = view.editor;
     if (view.getMode() === 'source') return editor.getSelection();
-    return window.getSelection()?.toString() ?? '';
+    return view.containerEl.win.getSelection()?.toString() ?? '';
   }
 
   private activeTitle(): string {
@@ -157,9 +159,8 @@ class EnginePicker extends FuzzySuggestModal<Engine> {
 const TEXT = {
   engines: {
     name: 'Search engines',
-    desc: 'One per line: a name, a bar, then the address with {query} where the search text goes. Example: Google | https://www.google.com/search?q={query}. Empty goes back to the built-in list.',
+    desc: 'One per line: a name, a bar, then the address with {query} where the search text goes. Example: Google | https://www.google.com/search?q={query}. The first one is the default. Empty goes back to the built-in list.',
   },
-  defaultEngine: { name: 'Default engine', desc: 'Used by the plain commands and listed first in the menus.' },
   menuEngines: {
     name: 'Engines in the menu',
     desc: 'How many engines get their own item in the right-click menu. The others are one click away under the picker item.',
@@ -180,15 +181,11 @@ class WebSearchMenuSettingTab extends PluginSettingTab {
    * versions ignore it and call `display()`.
    */
   getSettingDefinitions(): SettingDefinitionItem[] {
-    const s = this.plugin.settings;
-    const options: Record<string, string> = {};
-    for (const e of s.engines) options[e.name] = e.name;
     return [
       {
         ...TEXT.engines,
         control: { type: 'textarea', key: 'engines', rows: 8, validate: (v: string) => parseEngines(v).problems.join(' ') },
       },
-      { ...TEXT.defaultEngine, control: { type: 'dropdown', key: 'defaultEngine', options, defaultValue: DEFAULT_SETTINGS.defaultEngine } },
       { ...TEXT.menuEngines, control: { type: 'slider', key: 'menuEngines', min: 1, max: 6, step: 1, defaultValue: DEFAULT_SETTINGS.menuEngines } },
     ];
   }
@@ -204,7 +201,6 @@ class WebSearchMenuSettingTab extends PluginSettingTab {
       const parsed = parseEngines(String(value));
       s.engines = parsed.engines.length > 0 ? parsed.engines : DEFAULT_ENGINES.map((e) => ({ ...e }));
     } else if (key === 'menuEngines') s.menuEngines = Math.max(1, Math.round(Number(value)) || 1);
-    else if (key === 'defaultEngine') s.defaultEngine = String(value);
     await this.plugin.saveSettings();
   }
 
@@ -226,14 +222,6 @@ class WebSearchMenuSettingTab extends PluginSettingTab {
         });
       });
     containerEl.appendChild(problems);
-
-    new Setting(containerEl)
-      .setName(TEXT.defaultEngine.name)
-      .setDesc(TEXT.defaultEngine.desc)
-      .addDropdown((dd) => {
-        for (const e of s.engines) dd.addOption(e.name, e.name);
-        dd.setValue(pickEngine(s.engines, s.defaultEngine)?.name ?? '').onChange((v) => void this.setControlValue('defaultEngine', v));
-      });
 
     new Setting(containerEl)
       .setName(TEXT.menuEngines.name)

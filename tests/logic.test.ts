@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DEFAULT_ENGINES, buildUrl, cleanQuery, engineProblem, formatEngines, parseEngines, pickEngine, shorten } from '../src/logic.ts';
+import { DEFAULT_ENGINES, buildUrl, cleanQuery, engineProblem, formatEngines, parseEngines, shorten } from '../src/logic.ts';
 
 test('cleanQuery strips Markdown down to words', () => {
   assert.equal(cleanQuery('  **bold** and *italic*  \n text '), 'bold and italic text');
@@ -12,13 +12,16 @@ test('cleanQuery strips Markdown down to words', () => {
   assert.equal(cleanQuery('- [ ] buy milk'), 'buy milk');
   assert.equal(cleanQuery('## Title'), 'Title');
   assert.equal(cleanQuery('snake_case_word'), 'snake_case_word');
+  assert.equal(cleanQuery('2 * 3 = 6'), '2 * 3 = 6');
+  assert.equal(cleanQuery('__init__ method'), '__init__ method');
+  assert.equal(cleanQuery('a == b'), 'a == b');
 });
 
 test('buildUrl encodes the query and fills every placeholder', () => {
   assert.equal(buildUrl('https://x.org/?q={query}', 'a b&c'), 'https://x.org/?q=a%20b%26c');
   assert.equal(buildUrl('https://x.org/{query}/{query}', 'é'), 'https://x.org/%C3%A9/%C3%A9');
   assert.equal(buildUrl('https://x.org/', 'a'), null);
-  assert.equal(buildUrl('https://x.org/?q={query}', '  **  '), null);
+  assert.equal(buildUrl('https://x.org/?q={query}', '   '), null);
 });
 
 test('buildUrl does not let the query inject placeholders', () => {
@@ -44,12 +47,6 @@ test('parseEngines skips bad and duplicate lines and reports them', () => {
   assert.deepEqual(engines.map((e) => e.name), ['Good']);
   assert.equal(problems.length, 3);
   assert.match(problems[0], /Line 3/);
-});
-
-test('pickEngine falls back to the first', () => {
-  assert.equal(pickEngine(DEFAULT_ENGINES, 'bing')?.name, 'Bing');
-  assert.equal(pickEngine(DEFAULT_ENGINES, 'nope')?.name, 'Google');
-  assert.equal(pickEngine([], 'x'), undefined);
 });
 
 test('shorten', () => {
