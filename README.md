@@ -2,7 +2,7 @@
 
 Search the web for selected text or the note title from the right-click menu, with engines you define.
 
-![Right-click menu with Search Google, Search DuckDuckGo and Search the web with](docs/screenshot.png)
+![Right-click menu with Search Google, Search DuckDuckGo and Search the web with](https://raw.githubusercontent.com/perezamadorluisenrique-gif/web-search-menu/main/docs/screenshot.png)
 
 ## Usage
 
