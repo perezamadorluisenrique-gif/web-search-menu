@@ -2,6 +2,8 @@
 
 Search the web for selected text or the note title from the right-click menu, with engines you define.
 
+![Right-click menu with Search Google, Search DuckDuckGo and Search the web with](docs/screenshot.png)
+
 ## Usage
 
 Select some text and right-click: the menu gets **Search Google for “your words”** and a second engine, plus **Search the web with...** to pick any other engine from your list. Right-click a note in the file explorer, or a tab, to search for its title.
