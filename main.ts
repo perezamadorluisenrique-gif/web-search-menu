@@ -3,6 +3,7 @@ import type { Editor, SettingDefinitionItem } from 'obsidian';
 
 import { DEFAULT_ENGINES, buildUrl, cleanQuery, engineProblem, formatEngines, parseEngines, shorten } from './src/logic.ts';
 import type { Engine } from './src/logic.ts';
+import { moreDefinitions, renderMore } from './src/more-link.ts';
 
 interface WebSearchMenuSettings {
   engines: Engine[];
@@ -187,6 +188,7 @@ class WebSearchMenuSettingTab extends PluginSettingTab {
         control: { type: 'textarea', key: 'engines', rows: 8, validate: (v: string) => parseEngines(v).problems.join(' ') },
       },
       { ...TEXT.menuEngines, control: { type: 'slider', key: 'menuEngines', min: 1, max: 6, step: 1, defaultValue: DEFAULT_SETTINGS.menuEngines } },
+      ...(moreDefinitions() as SettingDefinitionItem[]),
     ];
   }
 
@@ -227,5 +229,6 @@ class WebSearchMenuSettingTab extends PluginSettingTab {
       .setName(TEXT.menuEngines.name)
       .setDesc(TEXT.menuEngines.desc)
       .addSlider((sl) => sl.setLimits(1, 6, 1).setValue(s.menuEngines).onChange((v) => void this.setControlValue('menuEngines', v)));
+    renderMore(this.containerEl, (el) => new Setting(el));
   }
 }
