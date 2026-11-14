@@ -1,4 +1,4 @@
-import { App, FuzzySuggestModal, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, FuzzySuggestModal, MarkdownView, Menu, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import type { Editor, SettingDefinitionItem } from 'obsidian';
 
 import { DEFAULT_ENGINES, buildUrl, cleanQuery, engineProblem, formatEngines, parseEngines, shorten } from './src/logic.ts';
@@ -62,6 +62,10 @@ export default class WebSearchMenuPlugin extends Plugin {
         if (query) this.addMenuItems(menu, query);
       }),
     );
+    // Reading view has no workspace event for its context menu, so listen for the
+    // right click itself. It only acts on selected text inside a note's reading
+    // view and never stops the click, so Obsidian's own menu and other plugins still run.
+    this.registerDomEvent(document, 'contextmenu', (evt) => this.onReadingMenu(evt), true);
     this.registerEvent(
       this.app.workspace.on('file-menu', (menu, file) => {
         if (!(file instanceof TFile) || file.extension !== 'md') return;
@@ -91,6 +95,17 @@ export default class WebSearchMenuPlugin extends Plugin {
     if (this.settings.engines.length > shown.length) {
       menu.addItem((item) => item.setTitle('Search the web with...').setIcon('globe').onClick(() => this.pickAndSearch(query)));
     }
+  }
+
+  /** Adds the search items, in a menu of their own, when text is selected in a reading view. */
+  private onReadingMenu(evt: MouseEvent) {
+    const target = evt.target instanceof Element ? evt.target : null;
+    if (!target?.closest('.markdown-reading-view, .markdown-preview-view')) return;
+    const query = cleanQuery(target.ownerDocument.defaultView?.getSelection()?.toString() ?? '');
+    if (!query) return;
+    const menu = new Menu();
+    this.addMenuItems(menu, query);
+    menu.showAtMouseEvent(evt);
   }
 
   private searchWith(engine: Engine, query: string) {
