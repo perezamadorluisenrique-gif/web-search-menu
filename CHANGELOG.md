@@ -4,9 +4,10 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
-## Unreleased
+## 0.1.1
 
 - Reading view: right-clicking selected text now offers the same search items as the editor.
+- Reading view: right-click on selected text shows the same search items as the editor.
 
 ## 0.1.0
 

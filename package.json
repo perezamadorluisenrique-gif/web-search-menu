@@ -1,6 +1,6 @@
 {
   "name": "web-search-menu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Web Search Menu for Obsidian - Search the web for selected text or the note title from the right-click menu, with engines you define.",
   "main": "main.js",
   "scripts": {
